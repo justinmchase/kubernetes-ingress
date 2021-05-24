@@ -1,0 +1,7 @@
+baseURL = "/nginx/"
+publishDir = "/nginx-docs/"
+title = "NGINX Plus"
+canonifyURLs = false
+
+[Params]
+  buildtype = "webdocs"
