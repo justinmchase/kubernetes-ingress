@@ -2,18 +2,17 @@ package metrics
 
 import (
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
+	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io/ioutil"
 	api_v1 "k8s.io/api/core/v1"
 	"net/http"
 	"os"
 	"strconv"
-	"time"
-
-	"github.com/golang/glog"
-	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
-	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // metricsEndpoint is the path where prometheus metrics will be exposed
@@ -58,17 +57,17 @@ func runServer(port string, registry prometheus.Gatherer, prometheusSecret *api_
 	} else {
 		// Unfortunately, http.ListenAndServeTLS() takes a filename instead of cert/key data, so we
 		// Write the cert and key to a temporary file. We create a unique file name to prevent collisions.
-		certFileName := fmt.Sprintf("%v-%s", time.Now().Unix(), "nginx-prometheus.cert")
-		keyFileName := fmt.Sprintf("%v-%s", time.Now().Unix(), "nginx-prometheus.key")
+		certFileName := "nginx-prometheus.cert"
+		keyFileName := "nginx-prometheus.key"
 		certFile, err := writeTempFile(prometheusSecret.Data[api_v1.TLSCertKey], certFileName)
 		if err != nil {
-			glog.Errorf("failed to create cert file for prometheus: %w", err)
+			glog.Fatal("failed to create cert file for prometheus: %w", err)
 		}
 		defer removeTemporaryFile(certFile)
 
 		keyFile, err := writeTempFile(prometheusSecret.Data[api_v1.TLSPrivateKeyKey], keyFileName)
 		if err != nil {
-			glog.Errorf("failed to create key file for prometheus: %w", err)
+			glog.Fatal("failed to create key file for prometheus: %w", err)
 		}
 		defer removeTemporaryFile(keyFile)
 
@@ -81,7 +80,11 @@ func writeTempFile(data []byte, name string) (*os.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
-	fmt.Println("Temp file name:", f.Name())
+
+	err = f.Chmod(nginx.TLSSecretFileMode)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't change the mode of the temp file %v: %v", f.Name(), err)
+	}
 
 	_, err = f.Write(data)
 	if err != nil {
