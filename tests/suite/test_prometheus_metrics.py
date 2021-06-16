@@ -215,6 +215,7 @@ class TestPrometheusExporter:
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         try:
             resp = requests.get(req_url, verify=False)
+            assert False, "Expected HTTP request to fail for a HTTPS endpoint but it succeeded"
         except:
             print("request fails as expected")
 

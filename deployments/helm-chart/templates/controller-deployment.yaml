@@ -20,6 +20,7 @@ spec:
 {{- if .Values.prometheus.create }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ .Values.prometheus.port }}"
+        prometheus.io/scheme: "{{ .Values.prometheus.scheme }}"
 {{- end }}
 {{- if .Values.controller.pod.annotations }}
 {{ toYaml .Values.controller.pod.annotations | indent 8 }}
