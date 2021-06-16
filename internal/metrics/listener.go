@@ -2,17 +2,18 @@ package metrics
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strconv"
+
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"io/ioutil"
 	api_v1 "k8s.io/api/core/v1"
-	"net/http"
-	"os"
-	"strconv"
 )
 
 // metricsEndpoint is the path where prometheus metrics will be exposed
@@ -97,6 +98,6 @@ func writeTempFile(data []byte, name string) (*os.File, error) {
 func removeTemporaryFile(file *os.File) {
 	err := os.Remove(file.Name())
 	if err != nil && !os.IsNotExist(err) {
-		glog.Warningf("failed to remove temp cert file for prometheus: %w", err)
+		glog.Warningf("failed to remove temp cert file for prometheus: %v", err)
 	}
 }
