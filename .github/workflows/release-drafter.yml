@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - test-release-drafter
   pull_request:
     types: [opened, reopened, synchronize]
 
