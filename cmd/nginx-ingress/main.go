@@ -29,6 +29,7 @@ import (
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	util_version "k8s.io/apimachinery/pkg/util/version"
@@ -306,7 +307,7 @@ func main() {
 		*useIngressClassOnly = true
 		glog.Warningln("The '-use-ingress-class-only' flag will be deprecated and has no effect on versions of kubernetes >= 1.18.0. Processing ONLY resources that have the 'ingressClassName' field in Ingress equal to the class.")
 
-		ingressClassRes, err := kubeClient.NetworkingV1beta1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
+		ingressClassRes, err := getIngressClass(kubeClient, *ingressClass)
 		if err != nil {
 			glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
 		}
@@ -801,6 +802,20 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 		return nil, fmt.Errorf("%v is invalid: %v", secretNsName, err)
 	}
 	return secret, nil
+}
+
+func getIngressClass(kubeClient *kubernetes.Clientset, ingressClassName string) (ingress *networking.IngressClass, err error) {
+	ns, name, err := k8s.ParseNamespaceName(ingressClassName)
+	if err == nil {
+		// If the name contains a namespace such as example/ExampleIngressClass then the search will be scoped to the provided namespace.
+		// This allows the user to optionally specify a namespace to restrict the search, which may be necessary for clusters
+		// where access to cluster level resources is limited.
+		return kubeClient.NetworkingV1beta1().IngressClasses(ns).Get(context.TODO(), *name, meta_v1.GetOptions{})
+	} else {
+		// If the namespace is not successfully parsed then just use the name as it was provided.
+		// This behavior is intentional, it needs to remain for backwards-compatibility purposes.
+		return kubeClient.NetworkingV1beta1().IngressClasses().Get(context.TODO(), ingressClassName, meta_v1.GetOptions{})
+	}
 }
 
 const (
