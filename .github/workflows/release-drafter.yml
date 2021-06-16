@@ -12,8 +12,6 @@ jobs:
   update_release_draft:
     runs-on: ubuntu-20.04
     steps:
-      - uses: MariuszKogut/release-drafter@Fix824
-        with:
-          commitish: refs/heads/master
+      - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
