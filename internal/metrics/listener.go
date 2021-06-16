@@ -64,13 +64,11 @@ func runServer(port string, registry prometheus.Gatherer, prometheusSecret *api_
 		if err != nil {
 			glog.Fatal("failed to create cert file for prometheus: %w", err)
 		}
-		defer removeTemporaryFile(certFile)
 
 		keyFile, err := writeTempFile(prometheusSecret.Data[api_v1.TLSPrivateKeyKey], keyFileName)
 		if err != nil {
 			glog.Fatal("failed to create key file for prometheus: %w", err)
 		}
-		defer removeTemporaryFile(keyFile)
 
 		glog.Fatal("Error in Prometheus listener server: ", http.ListenAndServeTLS(address, certFile.Name(), keyFile.Name(), nil))
 	}
@@ -93,11 +91,4 @@ func writeTempFile(data []byte, name string) (*os.File, error) {
 	}
 
 	return f, nil
-}
-
-func removeTemporaryFile(file *os.File) {
-	err := os.Remove(file.Name())
-	if err != nil && !os.IsNotExist(err) {
-		glog.Warningf("failed to remove temp cert file for prometheus: %v", err)
-	}
 }
