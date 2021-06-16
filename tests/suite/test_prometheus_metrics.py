@@ -199,7 +199,6 @@ class TestPrometheusExporter:
         ],
         indirect=["ingress_controller"],
     )
-    @pytest.mark.sean
     def test_https_metrics(
             self,
             prometheus_secret_setup,
